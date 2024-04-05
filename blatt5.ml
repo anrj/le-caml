@@ -28,11 +28,10 @@ match db with
 | st::sts -> if st.semester = sem then aux sem sts (acc + 1) else aux sem sts acc
 in aux sem db 0
 
-(*Not dividing by count / not average but total*)
 let rec student_avg_grade : int -> database -> float = fun id db ->
 match db with
 | [] -> 0.0
-| st::sts -> if st.id = id then List.fold_left (fun acc (_, g) -> acc +. g) 0.0 st.grades else student_avg_grade id sts
+| st::sts -> if st.id = id then ((List.fold_left (fun acc (_, g) -> acc +. g) 0.0 st.grades) /. (float_of_int @@ List.length st.grades)) else student_avg_grade id sts
 
 let course_avg_grade : int -> database -> float = fun crs db ->
 let rec aux crs db acc count =
@@ -85,10 +84,8 @@ let rec aux c = match c with
     else ((c *. (float_of_int (degree + 1)))::result, degree + 1)
 in
 let (result, _) = aux c in result
-*)
+*)              (*¯\_(ツ)_/¯*)
 let rec derive_poly2 = function
 | [] -> [] 
 | [h] -> []  
 | h::t -> (h *. (float_of_int (List.length t))) :: derive_poly2 t
- 
-(*¯\_(ツ)_/¯*)
