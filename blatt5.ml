@@ -58,7 +58,6 @@ let rec interleave3 lst1 lst2 lst3 = match lst1 with
 end
 | x :: xs -> x :: interleave3 lst2 lst3 xs
 
-
 (*Ocamlification*)
 let foo x y b =
 let rec bar x y b = match (x<y) with
@@ -70,22 +69,16 @@ in match (x>y) with
 
 (*Polynomial Party*)
 let eval_poly x coefficients = 
-let rec aux x c acc = match c with
+let rec aux c acc = match c with
 | [] -> acc
-| c::cs -> aux x cs (c +. x *. acc)
+| c::cs -> aux cs (c +. x *. acc)
 in
-aux x (List.rev coefficients) 0.
+aux (List.rev coefficients) 0.
 
-(*let derive_poly coefficients =
-let rec aux c = match c with
-| [] -> ([], -1)
-| c::cs -> let (result, degree) = aux c in
-    if degree = -1 then ([], 0)
-    else ((c *. (float_of_int (degree + 1)))::result, degree + 1)
-in
-let (result, _) = aux c in result
-*)              (*¯\_(ツ)_/¯*)
-let rec derive_poly2 = function
-| [] -> [] 
-| [h] -> []  
-| h::t -> (h *. (float_of_int (List.length t))) :: derive_poly2 t
+let derive_poly coeffs =
+    let rec impl = function
+    | [] | [_] -> ([], 0.)
+    | c::cs -> let (new_coeffs, deg) = impl cs in
+    (c *. (deg +. 1.))::new_coeffs, deg +. 1.
+in fst (impl coeffs)
+
