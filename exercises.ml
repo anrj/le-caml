@@ -56,7 +56,7 @@ let rec insert ~element ~index ~list =
 if index >= len list || index < 0 then failwith "Index out of bounds"
 else match (index, list) with
 | (0, []) -> [element]
-| (0, h::t) -> element::t
+| (0, h::t) -> element::h::t
 | (index, h::t) -> h :: insert ~index:(index - 1) ~element:element ~list:t
 | _ -> failwith ""
 
