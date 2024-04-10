@@ -5,6 +5,16 @@ let rev lst =
   | h::t -> aux ~acc:(h::acc) t
 in aux lst;;
 
+(*Head of a list*)
+let rec head = function
+| [] -> None
+| h::t -> Some h
+
+(*Append two lists*)
+let rec append lst1 lst2 = match lst1 with
+| [] -> lst2
+| h::t ->  h :: (append t lst2)
+
 (*Tail of a list*)
 let rec tail = function
 | [] -> None
@@ -43,7 +53,7 @@ in aux 0 lst;;
 
 (*Insert element at K'th index in a list*)
 let rec insert ~element ~index ~list = 
-if index >= len list || index < 0 then raise (Invalid_argument "Index out of bounds")
+if index >= len list || index < 0 then failwith "Index out of bounds"
 else match (index, list) with
 | (0, []) -> [element]
 | (0, h::t) -> element::t
