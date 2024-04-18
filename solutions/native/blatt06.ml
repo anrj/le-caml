@@ -56,6 +56,9 @@ let print_tree filename btree =
   Printf.fprintf file "}";
   close_out file
 *)
+
+(*Crawling Trees*)
+
 let crawl : command list -> tree -> tree = fun cmd current ->
   let rec aux cmd current stack = match cmd with
 | [] -> current
@@ -70,3 +73,35 @@ in aux cmd current []
 
 (*(Node (1, Empty, Node (2, Node (3, Empty, Empty), Node (4, Empty, Node(5, Node(6, Node(7, Empty, Empty), Empty), Empty)))))*)
 
+
+
+(*Quadtrees*)
+type quadtree_node = NoPoint
+                   | Point of int * int
+                   | QNode of quadtree_node (* bottom left *)
+                            * quadtree_node (* top left *)
+                            * quadtree_node (* bottom right *)
+                            * quadtree_node (* top right *)
+
+type quadtree = {width:int; height:int; root:quadtree_node}
+type point = int * int
+
+let insert : point -> quadtree -> quadtree = fun point tree ->
+  let rec aux point dimensions node = match point, dimensions, node with
+  | (x, y), (x0, y0, width, height), node ->
+  let xmid = (width + x0) / 2 in 
+  let ymid = (height + y0) / 2 in
+  if x >= width && y >= height then failwith "Point out of bounds" 
+  else match node with
+  | NoPoint -> Point (x, y)
+  | QNode (l1, l2, r1, r2) -> 
+  begin match x < width/2, y < height/2 with
+  | true, true   -> QNode ((aux (x,y) (x0, y0, xmid, ymid) l1), l2, r1, r2)
+  | true, false  -> QNode (l1, (aux (x,y) (x0, ymid, xmid, height) l2), r1, r2)
+  | false, true  -> QNode (l1, l2, (aux (x,y) (xmid, y0, width, ymid) l1), r2)
+  | false, false -> QNode (l1, l2, r1, (aux (x,y) (xmid, ymid, width, height) l1))
+  end
+  | Point (m, n) -> if (x, y) = (m, n) then Point (x, y) 
+  else aux (x, y) (x0, y0, width, height) (aux (m, n) (x0, y0, width, height) (QNode (NoPoint, NoPoint, NoPoint, NoPoint))) 
+ in let groot = aux point (0, 0, tree.width, tree.height) tree.root
+in {width = tree.width; height = tree.height; root = groot}
