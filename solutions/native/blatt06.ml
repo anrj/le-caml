@@ -91,7 +91,7 @@ let insert : point -> quadtree -> quadtree = fun point tree ->
   | (x, y), (x0, y0, width, height), node ->
   let xmid = (width + x0) / 2 in 
   let ymid = (height + y0) / 2 in
-  if x >= width && y >= height then failwith "Point out of bounds" 
+  if (x >= width || x <= x0) && (y >= height || y <= y0) then failwith "Point out of bounds" 
   else match node with
   | NoPoint -> Point (x, y)
   | QNode (l1, l2, r1, r2) -> 
