@@ -34,7 +34,39 @@ let rec leq_natural nata natb = match nata, natb with
 | _ -> false
 
 
+type tree = Empty | Node of int * tree * tree
+type command = Left | Right | Up | New of int | Delete | Push | Pop
 
-(*TTF exercises*)
+(* print a graphical representation (dot) of a binary tree (2. argument) to a file (1. argument) *)(**
+let print_tree filename btree = 
+  let file = open_out filename in
+  Printf.fprintf file "digraph Tree {\n";
+  let rec print next_id = function Empty -> 
+    Printf.fprintf file "\tn%d[shape=rectangle,label=\"\"];\n" next_id; next_id + 1, next_id
+  | Node (x, l, r) ->
+    let node_id = next_id in
+    Printf.fprintf file "\tn%d[label=\"%d\"];\n" node_id x;
+    let next_id, lid = print (next_id + 1) l in
+    let next_id, rid = print next_id r in 
+    (Printf.fprintf file "\tn%d -> n%d[label=\"L\"];\n" node_id lid);
+    (Printf.fprintf file "\tn%d -> n%d[label=\"R\"];\n" node_id rid);
+    next_id, node_id
+  in
+  ignore(print 0 btree);
+  Printf.fprintf file "}";
+  close_out file
+*)
+let crawl : command list -> tree -> tree = fun cmd current ->
+  let rec aux cmd current stack = match cmd with
+| [] -> current
+| Left  ::tail -> aux tail (match current with Node (_, l, _) -> l | Empty -> failwith "Invalid") (current::stack)
+| Right ::tail -> aux tail (match current with Node (_, _, r) -> r | Empty -> failwith "Invalid") (current::stack)
+| Up    ::tail -> begin match stack with [] -> failwith "Invalid" | h::t -> aux tail h t end
+| New x ::tail -> aux tail (Node (x, Empty, Empty)) (current::stack) (*todo*)
+| Delete::tail -> aux tail Empty (current::stack) (*todo*)
+| Push  ::tail -> aux tail current (current::stack)
+| Pop   ::tail -> begin match stack with [] -> failwith "Invalid" | h::t -> h end
+in aux cmd current []
 
+(*(Node (1, Empty, Node (2, Node (3, Empty, Empty), Node (4, Empty, Node(5, Node(6, Node(7, Empty, Empty), Empty), Empty)))))*)
 
