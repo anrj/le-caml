@@ -34,9 +34,6 @@ let rec leq_natural nata natb = match nata, natb with
 | _ -> false
 
 
-type tree = Empty | Node of int * tree * tree
-type command = Left | Right | Up | New of int | Delete | Push | Pop
-
 (* print a graphical representation (dot) of a binary tree (2. argument) to a file (1. argument) *)(**
 let print_tree filename btree = 
   let file = open_out filename in
@@ -57,19 +54,31 @@ let print_tree filename btree =
   close_out file
 *)
 
-(*Crawling Trees*)
 
+type tree = Empty | Node of int * tree * tree
+type command = Left | Right | Up | New of int | Delete | Push | Pop
+
+
+(*Crawling Trees*)
+(*Unfinished, Need test cases*)
 let crawl : command list -> tree -> tree = fun cmd current ->
   let rec aux cmd current stack = match cmd with
-| [] -> current
-| Left  ::tail -> aux tail (match current with Node (_, l, _) -> l | Empty -> failwith "Invalid") (current::stack)
-| Right ::tail -> aux tail (match current with Node (_, _, r) -> r | Empty -> failwith "Invalid") (current::stack)
-| Up    ::tail -> begin match stack with [] -> failwith "Invalid" | h::t -> aux tail h t end
+| [] -> false, [], current
+| Up    ::tail -> true, tail, current
+| Left  ::tail -> begin match current with Empty -> failwith "Invalid" | Node (x, l, r) ->
+                  let b', c', t' = aux tail l stack in
+                  if b' then aux tail (Node (x, l, r)) stack else b', c', (Node (x, t', r))
+                  end 
+| Right ::tail -> begin match current with Empty -> failwith "Invalid" | Node (x, l, r) ->
+                  let b', c', t' = aux tail r stack in
+                  if b' then aux tail (Node (x, l, r)) stack else b', c', (Node (x, l, t'))
+                  end 
 | New x ::tail -> aux tail (Node (x, Empty, Empty)) (current::stack) (*todo*)
-| Delete::tail -> aux tail Empty (current::stack) (*todo*)
+| Delete::tail -> aux tail Empty stack 
 | Push  ::tail -> aux tail current (current::stack)
-| Pop   ::tail -> begin match stack with [] -> failwith "Invalid" | h::t -> h end
-in aux cmd current []
+| Pop   ::tail -> begin match stack with [] -> failwith "Invalid" | h::t -> aux tail h t end
+in let tri = aux cmd current [] in
+match tri with (_, _, x) -> x
 
 (*(Node (1, Empty, Node (2, Node (3, Empty, Empty), Node (4, Empty, Node(5, Node(6, Node(7, Empty, Empty), Empty), Empty)))))*)
 
@@ -105,3 +114,33 @@ let insert : point -> quadtree -> quadtree = fun point tree ->
   else aux (x, y) (x0, y0, width, height) (aux (m, n) (x0, y0, width, height) (QNode (NoPoint, NoPoint, NoPoint, NoPoint))) 
  in let groot = aux point (0, 0, tree.width, tree.height) tree.root
 in {width = tree.width; height = tree.height; root = groot}
+
+(*Expression Evaluation*)
+type rat = int * int (* num, denom *)
+type unary_op = Neg
+type binary_op = Add | Sub | Mul | Div
+type expr = Const of rat
+          | UnOp of unary_op * expr
+          | BinOp of binary_op * expr * expr
+
+let eval_expr : expr -> rat = fun expr ->
+  let rec impl expr sign = match expr, sign with
+  | Const (m, n), sign -> if (sign mod 2 = 0) then (m, n) else (-m, n)
+  | UnOp (Neg, exp), sign -> impl exp (sign + 1)
+  | BinOp (x, exp1, exp2), sign -> 
+  begin match x with
+    | Add -> begin match (impl exp1 sign), (impl exp2 sign) with 
+      | (a1, b1), (a2, b2) when (b1 mod b2 = 0) -> (a1 + a2*(b1/b2),b1)      
+      | (a1, b1), (a2, b2) when (b2 mod b1 = 0) -> (a1*(b2/b1) + a2,b2)
+      | (a1, b1), (a2, b2) -> ((a1*b2 + a2*b1),(b1 * b2)) end
+    | Sub -> begin match (impl exp1 sign), (impl exp2 sign) with 
+      | (a1, b1), (a2, b2) when (b1 mod b2 = 0) -> (a1 - a2*(b1/b2),b1)
+      | (a1, b1), (a2, b2) when (b2 mod b1 = 0) -> (a1*(b2/b1) - a2,b2)
+      | (a1, b1), (a2, b2) -> ((a1*b2 + a2*b1),(b1 * b2)) end
+    | Mul -> (fun (a1,b1) (a2,b2) -> (a1*a2, b1*b2)) (impl exp1 sign) (impl exp2 sign)
+    | Div -> (fun (a1,b1) (a2,b2) -> (a1*b2, b1*a2)) (impl exp1 sign) (impl exp2 sign)
+  end
+in
+let helper rat = match rat with
+| (a, b) -> if (a < 0 && b < 0) || (a > 0 && a > 0) then (abs a, abs b) else (-a, b)
+in helper (impl expr 0)

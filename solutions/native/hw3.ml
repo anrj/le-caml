@@ -51,7 +51,7 @@
  *  WRITE YOUR IMPLEMENTATION BELOW
  *)
 
-
+let member c exp lst = 
 
 let testing_member () =
    let l =
