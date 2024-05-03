@@ -128,19 +128,18 @@ let eval_expr : expr -> rat = fun expr ->
   | Const (m, n), sign -> if (sign mod 2 = 0) then (m, n) else (-m, n)
   | UnOp (Neg, exp), sign -> impl exp (sign + 1)
   | BinOp (x, exp1, exp2), sign -> 
+  let expr1 = impl exp1 sign in
+  let expr2 = impl exp2 sign in
   begin match x with
-    | Add -> begin match (impl exp1 sign), (impl exp2 sign) with 
-      | (a1, b1), (a2, b2) when (b1 mod b2 = 0) -> (a1 + a2*(b1/b2),b1)      
-      | (a1, b1), (a2, b2) when (b2 mod b1 = 0) -> (a1*(b2/b1) + a2,b2)
-      | (a1, b1), (a2, b2) -> ((a1*b2 + a2*b1),(b1 * b2)) end
-    | Sub -> begin match (impl exp1 sign), (impl exp2 sign) with 
-      | (a1, b1), (a2, b2) when (b1 mod b2 = 0) -> (a1 - a2*(b1/b2),b1)
-      | (a1, b1), (a2, b2) when (b2 mod b1 = 0) -> (a1*(b2/b1) - a2,b2)
-      | (a1, b1), (a2, b2) -> ((a1*b2 + a2*b1),(b1 * b2)) end
-    | Mul -> (fun (a1,b1) (a2,b2) -> (a1*a2, b1*b2)) (impl exp1 sign) (impl exp2 sign)
-    | Div -> (fun (a1,b1) (a2,b2) -> (a1*b2, b1*a2)) (impl exp1 sign) (impl exp2 sign)
+    | Add -> (fun (a1, b1) (a2, b2) -> (a1*b2 + a2*b1, b1 * b2)) expr1 expr2
+    | Sub -> (fun (a1, b1) (a2, b2) -> (a1*b2 - a2*b1, b1 * b2)) expr1 expr2
+    | Mul -> (fun (a1,b1) (a2,b2) -> (a1*a2, b1*b2)) expr1 expr2
+    | Div -> (fun (a1,b1) (a2,b2) -> (a1*b2, b1*a2)) expr1 expr2
   end
 in
 let helper rat = match rat with
 | (a, b) -> if (a < 0 && b < 0) || (a > 0 && a > 0) then (abs a, abs b) else (-a, b)
-in helper (impl expr 0)
+in let const = helper (impl expr 0)
+in let rec gcd a b = if b = 0 then a else gcd b (a mod b)
+in let div = (fun (a, b) -> gcd a b) const
+in (fun (a, b) -> (a / div, b / div)) const

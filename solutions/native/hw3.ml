@@ -12,7 +12,7 @@
 (*    1.  (0.3 points) 
 
    Write a function member, which takes a comparision function c, a term t and 
-   a list l and returns true if l contains and element e such that e and t are
+   a list l and returns true if l contains an element e such that e and t are
    equal with respect to c.
 
    To remind for the sample runs below: the built-in compare function gives 
@@ -50,8 +50,10 @@
 
  *  WRITE YOUR IMPLEMENTATION BELOW
  *)
+let equal_second_components (_, x) (_, y) = compare x y 
+let evens_eq_evens_odds_eq_odds n1 n2 = compare (n1 mod 2) (n2 mod 2)
+let rec member c term lst = match lst with | [] -> false | h::t -> if c term h = 0 then true else member c term t
 
-let member c exp lst = 
 
 let testing_member () =
    let l =
@@ -94,7 +96,17 @@ let testing_member () =
          [(("str1", 2), 2); (("str2", 1), 2); (("str1", 1), 1)]
 
  *  WRITE YOUR IMPLEMENTATION BELOW
- *)                                                 
+ *)
+
+let rec helper_count element list3 = match list3 with
+| [] -> [(element, 1)]
+| (h,n)::tail -> if element = h then (element, n+1)::tail else (h, n)::helper_count element tail 
+
+let count_occurrences list1 =
+  let rec aux acc list1 = match list1 with
+  | [] -> acc
+  | h :: t -> aux (helper_count h acc) t
+in List.sort (fun (_, a) (_, b) -> compare b a) (aux [] list1)
 
 
 let testing_count_occurrences () =
@@ -127,7 +139,14 @@ let testing_count_occurrences () =
       Exception: Failure "Empty list has no last element".
 
  *  WRITE YOUR IMPLEMENTATION BELOW
- *)                                                 
+ *)                                      
+ 
+ let drop_last lst =
+  let rec aux lst acc = match lst with
+  | [] -> failwith "Empty list has no last element"
+  | [x] -> acc
+  | h::t -> aux t (h :: acc)
+  in List.rev @@ aux lst []
 
 
 let testing_drop_last () =
@@ -160,7 +179,7 @@ let testing_drop_last () =
  *  WRITE YOUR IMPLEMENTATION BELOW
  *)
 
-
+let drop_last_opt lst = if lst = [] then None else Some (drop_last lst)
 let testing_drop_last_opt () =
    let l =
      [
@@ -199,6 +218,16 @@ let testing_drop_last_opt () =
  *  WRITE YOUR IMPLEMENTATION BELOW
  *)
 
+
+let zip_with f lst1 lst2 = 
+  let rec aux acc lst1 lst2 = match lst1, lst2 with
+| [], [] -> acc
+| (x, []) -> acc
+| ([], x) -> acc
+| x::xs, y::ys -> aux ((f x y) :: acc) xs ys
+in List.rev (aux [] lst1 lst2)
+
+
 let testing_zip_with () =
    let l =
      [
@@ -226,8 +255,12 @@ let testing_zip_with () =
  *  WRITE YOUR IMPLEMENTATION BELOW
  *)
 
+let rec unzip lst1 = match lst1 with
+| [] -> ([], [])
+| (x::x')::tail -> let (y, y') = unzip lst1 in (x::y, x'::y')
+| _ -> failwith "Unexpected"
 
-let testing_unzip () =
+(*let testing_unzip () =
    let l =
      [
        __LINE_OF__ ((unzip [('a',1); ('b',2)]) = (['a';'b'], [1;2]));
@@ -239,7 +272,7 @@ let testing_unzip () =
    if result then (Printf.printf "The unzip test succeeds.\n"; [])
    else (Printf.printf "The unzip test fails.\n Check the corresponding line numbers in the list below.\n";
          (List.filter (fun (x,y) -> y=false) l) |> List.map fst)
-
+*)
 
 (* ********************************************************************************** *)
 
@@ -379,10 +412,22 @@ let wc22_H =
    (Gha, [], Uru, ["De Arrascaeta"; "De Arrascaeta"])
   ]
 
+let scorers team scorers =
+  let sorted_list = count_occurrences scorers in 
+  let rec aux = function
+  | [] -> []
+  | (player, goals)::t -> (player, team, goals)::aux t 
+in List.sort (fun (n1, _, a) (n2, _, b) -> if a = b then compare n1 n2 else compare b a) (aux sorted_list)
+ 
+let table 
+
+let table_and_scorers = function
+| [] ->
+| (team1, scorers1, team2, scorers2)::tail -> ( ,((scorers team1 scorers1) @ (scorers team2 scorers2)))  
 
 
 let testing_table_and_scorers () =
-  let l =
+  
     [
       __LINE_OF__ (table_and_scorers wc22_H =
                      ([(Por, 3, 2, 0, 1, 6, 4, 6);
