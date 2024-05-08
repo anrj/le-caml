@@ -27,6 +27,9 @@
  *  WRITE YOUR IMPLEMENTATIONS OF f1, f2, AND f3.
  *)
 
+let f1 acc (a, b) = List.rev ((b, a) :: acc)
+let f2 acc el = el :: List.rev acc
+let f3 acc (k,v) = fun x -> if x = k then v else acc x (*bs*)
 
 (* Problem 2: 0.8 points.
  *
@@ -42,6 +45,17 @@
  *
  *  Call the tail recursive variants respectively map_tr and replicate_tr
  *)
+
+ let map_tr f =
+  let rec aux f acc = function
+  | [] -> acc
+  | h::t -> aux f (acc @ [f h]) t
+ in aux f []
+
+ let replicate_tr n x = 
+  let rec aux acc n x = 
+    if n < 1 then acc else aux (x::acc) (n-1) x
+  in aux [] n x
 
 
 
@@ -62,8 +76,6 @@
  and 'a custom_cell = NilC | ConsC of ('a * 'a custom_llist)
  
  
- 
- 
  (* -----------------------------------------------------------------------------
   *  'a ocaml_llist
   * -----------------------------------------------------------------------------
@@ -74,8 +86,6 @@
  and 'a ocaml_cell = NilO | ConsO of ('a * 'a ocaml_llist)
  
                                        
-     
- 
  (* Problem 3: 0.8 points
   * -----------------------------------------------------------------------------
   *
@@ -85,8 +95,17 @@
   *  
   *
   *)
- 
- 
+
+ let rec map_over_custom_llist f c_list =
+  match c_list () with
+  | NilC -> fun () -> NilC
+  | ConsC (h, t) -> fun () -> ConsC (f h, map_over_custom_llist f t)
+
+ let rec map_over_ocaml_llist f o_list =
+  match Lazy.force o_list with
+  | NilO -> lazy NilO
+  | ConsO (h, t) -> lazy (ConsO (f h, map_over_ocaml_llist f t))
+
  
                           
  (* Problem 4: 0.8 points
@@ -102,7 +121,26 @@
   *  
   *
   *)
+
+  let rec merge_lists lst1 lst2 = match lst1, lst2 with
+  | [], [] -> []
+  | [], lst | lst, [] -> lst
+  | x::xs, y::ys -> if x <= y then x :: merge_lists lst2 xs else y :: merge_lists lst1 ys
  
+
+  let rec merge_custom_llists c_list1 c_list2 =
+    match c_list1 (), c_list2 () with
+    | NilC, NilC -> fun () -> NilC
+    | NilC, clist | clist, NilC -> fun () -> clist
+    | ConsC (x, xs), ConsC (y, ys) -> if x <= y then fun () -> ConsC (x, merge_custom_llists c_list2 xs) 
+                                      else fun () -> ConsC (y,  merge_custom_llists c_list1 ys)
+ 
+  let rec merge_ocaml_llists c_list1 c_list2 =
+    match Lazy.force c_list1, Lazy.force c_list2 with
+    | NilO, NilO -> lazy NilO
+    | NilO, clist | clist, NilO -> lazy clist
+    | ConsO (x, xs), ConsO (y, ys) -> if x <= y then lazy (ConsO (x, merge_ocaml_llists c_list2 xs))
+                                      else lazy (ConsO (y,  merge_ocaml_llists c_list1 ys))
  
  
  (* Problem 5: 0.8 points
@@ -114,9 +152,31 @@
   *  Call them respectively drop_dupl_custom_llist and drop_dupl_ocaml_llist.
   *  
   *
-  *)        
- 
- 
+  *)
+  
+ let drop_dupl_tr lst = 
+  let rec impl lst acc = match lst with
+  | [] -> acc
+  | h::t::r -> if h = t then impl (h::r) acc else impl (t::r) (acc @ [h])
+  | h::t -> impl t (acc @ [h])
+ in impl lst []
+
+ let rec drop_dupl = function
+  | [] -> []
+  | h::t::r -> if h = t then drop_dupl (h::r) else h :: drop_dupl (t::r)
+  | h::t -> h :: drop_dupl t
+
+ let rec drop_dupl_custom_llist c_list = match c_list () with
+  | NilC -> fun () -> NilC
+  | ConsC (x, y) -> match y () with
+                    | NilC -> fun () -> ConsC (x, fun() -> NilC)
+                    | ConsC (xs, ys) -> if x = xs then drop_dupl_custom_llist y else fun () -> ConsC (x, drop_dupl_custom_llist y)
+
+ let rec drop_dupl_ocaml_llist o_list = match Lazy.force o_list with
+  | NilO -> lazy NilO
+  | ConsO (x, y) -> match Lazy.force y with
+                    | NilO -> lazy (ConsO (x, lazy NilO))
+                    | ConsO (xs, ys) -> if x = xs then drop_dupl_ocaml_llist y else lazy (ConsO (x, drop_dupl_ocaml_llist y))
                   
  
  (* Problem 6: 1.0 points
@@ -131,7 +191,39 @@
   *  Call them respectively hamming_custom_llist and hamming_ocaml_llist.
   *
   *)        
- 
+
+
+  let is_Hamming x =
+    let rec iterative_div n x =
+      if (x mod n == 0) then iterative_div n (x/n) else x in
+    iterative_div 5 (iterative_div 3 (iterative_div 2 x)) = 1
+  
+    
+  let hamming_custom =
+    let rec from_custom from = fun() -> ConsC (from, from_custom (from + 1)) in
+    let rec filter_custom p l =
+      fun () ->
+      match l () with
+      | NilC -> NilC
+      | ConsC (h,t) ->
+         if p h
+         then ConsC (h, filter_custom p t)
+         else (filter_custom p t) () in
+    filter_custom is_Hamming (from_custom 1)
+  
+  
+  let hamming_ocaml =
+    let rec from_ocaml from = lazy (ConsO (from, from_ocaml (from+1))) in
+    let rec filter_ocaml p l =
+    lazy (
+        match Lazy.force l with
+        | NilO -> NilO
+        | ConsO (h,t) ->
+           if p h
+           then ConsO (h, filter_ocaml p t)
+           else Lazy.force (filter_ocaml p t)
+      ) in
+    filter_ocaml is_Hamming (from_ocaml 1)
  
  
  (* ****************************************************************************

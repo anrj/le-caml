@@ -60,5 +60,76 @@ else match (index, list) with
 | (index, h::t) -> h :: insert ~index:(index - 1) ~element:element ~list:t
 | _ -> failwith ""
 
-(**)
+(*Flatten a List*)
+type 'a node =
+  | One of 'a 
+  | Many of 'a node list
 
+let flatten flist = 
+  let rec aux flist acc = match flist with
+  | [] -> acc
+  | h::t -> begin match h with
+            | One a -> aux t (acc @ [a])
+            | Many lst -> aux (lst @ t) acc
+            end
+in aux flist []
+
+(*Eliminate Duplicates*)
+let compress =
+  let rec aux acc = function
+  | h::t::r -> if h = t then aux acc (h::r) else aux (acc @ [h]) (t::r)
+  | lst -> acc @ lst
+in aux []
+
+(*Pack Consecutive Duplicates*)
+let pack lst =
+  let rec aux acc1 acc2 = function 
+  | [] -> acc2
+  | h::(t::r as l) -> if h = t then aux (acc1 @ [h]) (acc2) l else aux [] ((acc1 @ [h])::acc2) l
+  | h::t -> if h = (List.hd acc1) then aux acc1 ((acc1 @ [h])::acc2) t else aux acc1 ([h] :: acc2) t
+in (aux [] [] lst) |> List.rev
+
+(*Run-Length Encoding*) (***)
+
+(*let rec helper_count elm lst = match lst with
+| [] -> [(elm, 1)]
+| (h, n)::t -> if elm = h then (elm, n+1)::t else (h, n)::helper_count elm t
+
+let count_occurrences lst =
+  let rec aux acc lst = match lst with
+  | [] -> acc
+  | h::t -> aux (helper_count h acc) t
+in aux [] lst*)
+
+let encode list =
+  let rec aux count acc = function
+    | [] -> [] 
+    | [x] -> (count + 1, x) :: acc
+    | a :: (b :: _ as t) -> if a = b then aux (count + 1) acc t
+                            else aux 0 ((count + 1, a) :: acc) t in
+  List.rev (aux 0 [] list);;
+
+(*Modified Run-Length Encoding*)
+type 'a rle =
+  | One of 'a
+  | Many of int * 'a
+(*TODO*)
+
+(*Decode a Run-Length Encoded List*)
+let decode rle =
+  let rec aux acc = function
+  | [] -> acc
+  | One x :: tail -> aux (x :: acc) tail
+  | Many (n, x) :: tail -> aux ((List.init n (fun _ -> x)) @ acc) tail
+in aux [] rle |> List.rev
+
+(*Run-Length Encoding of a List (Direct Solution)*)
+
+(*TODO*)
+
+(*Duplicate the Elements of a List*)
+let duplicate lst =
+  let rec aux acc = function
+  | [] -> acc
+  | h::t -> aux (acc @ [h; h]) t
+in aux [] lst
