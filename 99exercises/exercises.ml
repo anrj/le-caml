@@ -124,7 +124,6 @@ let decode rle =
 in aux [] rle |> List.rev
 
 (*Run-Length Encoding of a List (Direct Solution)*)
-
 (*TODO*)
 
 (*Duplicate the Elements of a List*)
@@ -133,3 +132,30 @@ let duplicate lst =
   | [] -> acc
   | h::t -> aux (acc @ [h; h]) t
 in aux [] lst
+
+(*Replicate the Elements of a List a Given Number of Times*)
+let replicate lst n =
+  let rec aux acc = function
+  | [] -> acc
+  | h::t -> aux (acc @ (List.init n (fun _ -> h))) t
+in aux [] lst
+
+(*Drop Every N'th Element From a List*)
+let drop_nth lst n = 
+  let rec aux acc count = function
+  | [] -> acc
+  | h::t -> if count = n then aux acc 1 t else aux (h::acc) (count + 1) t
+in aux [] 1 lst |> List.rev
+
+(*Split a List Into Two Parts; The Length of the First Part Is Given*)
+let split lst n =
+  let rec aux acc1 acc2 count = function
+  | [] -> (List.rev acc1, List.rev acc2)
+  | h::t -> if count = n then aux acc1 (t::acc2) 0 [] else aux (h::acc1) acc2 (count + 1) t
+in aux [] [] 0 lst 
+
+(*Extract a Slice From a List*)
+let slice lst i k = 
+  let rec aux acc i k = function 
+  | [] -> acc
+  | h::t -> if 
