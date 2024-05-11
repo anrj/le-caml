@@ -52,14 +52,12 @@ let len lst =
 in aux 0 lst;;
 
 (*Insert element at K'th index in a list*)
-let rec insert ~element ~index ~list = 
-if index >= len list || index < 0 then failwith "Index out of bounds"
-else match (index, list) with
-| (0, []) -> [element]
-| (0, h::t) -> element::h::t
-| (index, h::t) -> h :: insert ~index:(index - 1) ~element:element ~list:t
-| _ -> failwith ""
-
+let rec insert2 element n lst = 
+  if n >= List.length lst || n < 0 then failwith "Index out of bounds"
+  else match lst with
+  | [] -> [element]
+  | h::t as l -> if n = 0 then element::l else insert2 element (n-1) t
+  
 (*Flatten a List*)
 type 'a node =
   | One of 'a 
@@ -156,6 +154,35 @@ in aux [] [] 0 lst
 
 (*Extract a Slice From a List*)
 let slice lst i k = 
-  let rec aux acc i k = function 
+  let rec aux acc count = function 
   | [] -> acc
-  | h::t -> if 
+  | h::t -> if count >= i && count <= k then aux (h::acc) (count+1) t else aux acc (count+1) t
+in aux [] 0 lst |> List.rev
+
+(*Rotate a List N Places to the Left*)
+let rotate lst n = 
+  let rec aux acc1 acc2 count = function
+  | [] -> acc2 @ List.rev acc1
+  | h::t -> if count < n then aux (h::acc1) acc2 (count+1) t else aux acc1 (h::t) count []
+in aux [] [] 0 lst
+
+(*Create a List Containing All Integers Within a Given Range*)
+let range i k = 
+  let rec aux acc i k = if i <> k then if i < k then aux (i::acc) (i+1) k else aux (k::acc) i (k-1) else acc
+in aux [] i k |> List.rev
+
+(*Extract a Given Number of Randomly Selected Elements From a List*)
+let rand_select lst n =
+  let rec get n = function
+  | [] -> failwith ""
+  | h :: t -> if n = 0 then h else get (n-1) t in
+  let rec aux acc n = function
+  | [] -> acc
+  | h::t -> if n = 0 then aux acc n [] else aux ((get ( Random.int @@ List.length lst) lst) :: acc) (n-1) (h::t)
+in aux [] n lst
+
+(*Lotto: Draw N Different Random Numbers From the Set 1..M*)
+let lotto_select n ub =
+ let rec aux acc n = if n > 0 then aux ((1 + Random.int ub) :: acc) (n - 1) else acc
+in aux [] n
+
