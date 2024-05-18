@@ -72,8 +72,8 @@ let f3 acc (k,v) = fun x -> if x = k then v else acc x (*bs*)
  *  Defines custom lazy lists.
  *)
 
- type 'a custom_llist = (unit -> 'a custom_cell)
- and 'a custom_cell = NilC | ConsC of ('a * 'a custom_llist)
+
+type 'a custom_cell = NilC | ConsC of ('a * (unit -> 'a custom_cell))
  
  
  (* -----------------------------------------------------------------------------

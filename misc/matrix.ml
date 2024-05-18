@@ -33,7 +33,7 @@ module IntRing : Ring with type t = int = struct
   type t = int
   let zero = 0
   let one = 1
-  let compare = Pervasives.compare
+  let compare = compare
   let to_string = string_of_int
   let add = (+)
   let mul = ( * )
@@ -43,7 +43,7 @@ module FloatRing : Ring with type t = float = struct
   type t = float
   let zero = 0.
   let one = 1.
-  let compare = Pervasives.compare   
+  let compare = compare   
   let to_string = string_of_float
   let add = (+.)
   let mul = ( *. )
@@ -68,7 +68,7 @@ module BoolRing : FiniteRing with type t = bool = struct
   type t = bool
   let zero = false
   let one = true
-  let compare = Pervasives.compare
+  let compare = compare
   let to_string = string_of_bool
   let add = (||)
   let mul = (&&)

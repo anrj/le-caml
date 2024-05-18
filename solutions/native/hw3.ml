@@ -418,12 +418,11 @@ let scorers team scorers =
   | [] -> []
   | (player, goals)::t -> (player, team, goals)::aux t 
 in List.sort (fun (n1, _, a) (n2, _, b) -> if a = b then compare n1 n2 else compare b a) (aux sorted_list)
- 
-let table 
 
-let table_and_scorers = function
-| [] ->
-| (team1, scorers1, team2, scorers2)::tail -> ( ,((scorers team1 scorers1) @ (scorers team2 scorers2)))  
+
+(*let table_and_scorers = function
+| [] -> 
+| (team1, scorers1, team2, scorers2)::tail -> ( ,((scorers team1 scorers1) @ (scorers team2 scorers2))) *) 
 
 
 let testing_table_and_scorers () =

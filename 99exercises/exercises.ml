@@ -186,3 +186,4 @@ let lotto_select n ub =
  let rec aux acc n = if n > 0 then aux ((1 + Random.int ub) :: acc) (n - 1) else acc
 in aux [] n
 
+(*Generate a Random Permutation of the Elements of a List*)
